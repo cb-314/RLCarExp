@@ -14,6 +14,13 @@ class Car:
     space.add(self.body, self.poly)
   def accelerate(self, force):
     car.body.apply_force_at_local_point((force, 0.0), (-self.size[0]/2.0, 0.0))
+  def brake(self, force):
+    velocity = self.body.velocity_at_local_point((0.0, 0.0))
+    heading = Vec2d(1.0, 0.0)
+    heading.rotate(self.body.angle)
+    if abs(velocity.dot(heading)) > 1e-3:
+      sign = velocity.dot(heading) / abs(velocity.dot(heading))
+      car.body.apply_force_at_local_point((-sign*force, 0.0), (0.0, 0.0))
   def front_wheel(self, steer_angle=0.0):
     velocity_wheel = self.body.velocity_at_local_point((self.size[0]/2.0, 0.0))
     steer_vector = Vec2d(1.0, 0.0)
@@ -43,18 +50,23 @@ if __name__ == "__main__":
 
   draw_options = pygame_util.DrawOptions(screen)
   for i in range(3000):
-    if i < 200:
-      car.accelerate(10.0)
-      car.front_wheel()
-      car.back_wheel()
-    if i > 200 and i < 1000:
-      car.accelerate(10.0)
-      car.front_wheel(0.1)
-      car.back_wheel()
-    if i > 1000:
-      car.accelerate(10.0)
-      car.front_wheel()
-      car.back_wheel()
+    acceleration = 0.0
+    brake = 0.0
+    steer_angle = 0.0
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_UP]:
+      acceleration = 100.0
+    if keys[pygame.K_DOWN]:
+      brake = 200
+    if keys[pygame.K_LEFT]:
+      steer_angle = 0.1
+    if keys[pygame.K_RIGHT]:
+      steer_angle = -0.1
+    pygame.event.pump()
+    car.accelerate(acceleration)
+    car.brake(brake)
+    car.front_wheel(steer_angle)
+    car.back_wheel()
     
     space.step(1/100.0)
     screen.fill((255, 255, 255))
