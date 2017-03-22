@@ -15,7 +15,11 @@ class Car:
     self.wheelbase = 1.0
     self.wheel_friction = (1e-3, 1e-1)
   def update(self, dt=1e-2):
-    pass
+    total_force = vector2(0.0, 0.0)
+    # update velocity
+    self.velocity = self.velocity + total_force / self.mass * dt
+    # update position
+    self.position = self.position + self.velocity * dt
 
 
 if __name__ = "__main__":
