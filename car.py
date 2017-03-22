@@ -21,7 +21,12 @@ class Car:
 
 car = Car()
 
-for i in range(10):
-  car.update(dt=0.1)
+for i in range(500):
+  if i % 200 == 0:
+    car.steerAngle = 0.1
+  else:
+    car.steerAngle = 0.0
+  car.update(dt=0.01)
   plt.plot(car.carLocation.x, car.carLocation.y, "k.")
+plt.gca().set_aspect("equal", "datalim")
 plt.show()
