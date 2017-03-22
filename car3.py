@@ -10,11 +10,13 @@ class Car:
   def __init__(self, space, position):
     self.mass = 1.0
     self.size = (20, 10)
+    self.steer_angle = 0.0
     self.body = pymunk.Body(self.mass, pymunk.moment_for_box(self.mass, self.size)) 
     self.body.position = position
     self.poly = pymunk.Poly.create_box(self.body, self.size)
     space.add(self.body, self.poly)
-
+  def accelerate(self, force):
+    car.body.apply_force_at_local_point((force, 0.0), (-self.size[0]/2.0, 0.0))
 
 
 if __name__ == "__main__":
@@ -27,8 +29,7 @@ if __name__ == "__main__":
 
   for i in range(1000):
     if i < 200:
-      car.body.apply_force_at_local_point((0.0, 10.0), (10.0, 0.0))
-    
+      car.accelerate(10.0) 
     screen.fill((255, 255, 255))
     space.debug_draw(draw_options)
     space.step(1/100.0)
