@@ -6,24 +6,31 @@ pygame.init()
 screen = pygame.display.set_mode((800, 800))
 clock = pygame.time.Clock()
 
-space = pymunk.Space() 
-space.gravity = (0, 0)
+class Car:
+  def __init__(self, space, position):
+    self.mass = 1.0
+    self.size = (20, 10)
+    self.body = pymunk.Body(self.mass, pymunk.moment_for_box(self.mass, self.size)) 
+    self.body.position = position
+    self.poly = pymunk.Poly.create_box(self.body, self.size)
+    space.add(self.body, self.poly)
 
-# car
-body = pymunk.Body(1, pymunk.moment_for_box(1, (20,10))) 
-body.position = (300, 300) 
-poly = pymunk.Poly.create_box(body, (20, 10))
-poly.friction = 1
-space.add(body, poly)
 
-draw_options = pygame_util.DrawOptions(screen)
 
-for i in range(1000):
-  if i < 200:
-    body.apply_force_at_local_point((0.0, 10.0), (10.0, 0.0))
-  
-  screen.fill((0, 0, 0))
-  space.debug_draw(draw_options)
-  space.step(1/100.0)
-  pygame.display.flip()
-  clock.tick(100)
+if __name__ == "__main__":
+  space = pymunk.Space() 
+  space.gravity = (0, 0)
+
+  car = Car(space, (300, 300))
+
+  draw_options = pygame_util.DrawOptions(screen)
+
+  for i in range(1000):
+    if i < 200:
+      car.body.apply_force_at_local_point((0.0, 10.0), (10.0, 0.0))
+    
+    screen.fill((255, 255, 255))
+    space.debug_draw(draw_options)
+    space.step(1/100.0)
+    pygame.display.flip()
+    clock.tick(100)
