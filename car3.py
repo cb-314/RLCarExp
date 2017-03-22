@@ -3,17 +3,18 @@ import pygame
 from pygame.locals import *
 from pymunk import pygame_util
 pygame.init()
-screen = pygame.display.set_mode((600, 600))
+screen = pygame.display.set_mode((800, 800))
 clock = pygame.time.Clock()
 
-space = pymunk.Space()      # Create a Space which contain the simulation
-space.gravity = (0, 0)     # Set its gravity
+space = pymunk.Space() 
+space.gravity = (0, 0)
 
-body = pymunk.Body(1, pymunk.moment_for_box(1, (10,5)))  # Create a Body with mass and moment
-body.position = (300, 300)      # Set the position of the body
-
-poly = pymunk.Poly.create_box(body, (10, 5)) # Create a box shape and attach to body
-space.add(body, poly)       # Add both body and shape to the simulation
+# car
+body = pymunk.Body(1, pymunk.moment_for_box(1, (20,10))) 
+body.position = (300, 300) 
+poly = pymunk.Poly.create_box(body, (20, 10))
+poly.friction = 1
+space.add(body, poly)
 
 draw_options = pygame_util.DrawOptions(screen)
 
