@@ -53,6 +53,7 @@ if __name__ == "__main__":
     acceleration = 0.0
     brake = 0.0
     steer_angle = 0.0
+    
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP]:
       acceleration = 100.0
@@ -63,6 +64,7 @@ if __name__ == "__main__":
     if keys[pygame.K_RIGHT]:
       steer_angle = -0.1
     pygame.event.pump()
+
     car.accelerate(acceleration)
     car.brake(brake)
     car.front_wheel(steer_angle)
