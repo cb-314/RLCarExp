@@ -17,6 +17,7 @@ class Car:
   def update(self, dt=1e-2):
     total_force = Vector2(0.0, 0.0)
     total_force = total_force + self.motor_force * self.velocity.normalize()
+    # turing is more complicated than I thought because we need a heading direction and angular momentum and so on
     # update velocity
     self.velocity = self.velocity + total_force / self.mass * dt
     # update position
