@@ -5,6 +5,7 @@ from pymunk import pygame_util
 from pymunk.vec2d import Vec2d
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 import xgboost as xgb
 
@@ -51,19 +52,18 @@ class Car:
   def __init__(self, space, position):
     self.car_model = CarModel(space, position)
     self.last_position = Vec2d(self.car_model.body.position)
-    self.acceleration = 0.0
+    self.acceleration = 50.0
     self.brake = 0.0
     self.steer_angle = 0.0
     self.reward = 0.0
-    self.q_model = xgb.XGBRegressor()
+    self.q_model = KNeighborsRegressor()
     self.log = []
     self.rewards = []
   def logging(self):
-    row = [self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, self.acceleration, self.steer_angle]
+    row = [self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, self.steer_angle]
     self.log.append(row)
     self.rewards.append(self.reward)
   def step(self):
-    acceleration_space = np.linspace(0.0, 100.0, 20)
     steer_angle_space = np.linspace(-0.2, 0.2, 21)
     # calculate last reward
     self.reward = self.car_model.body.position.x - self.last_position.x
@@ -72,29 +72,25 @@ class Car:
       # epsilon-greedy
       epsilon = np.random.rand(1)[0]
       #epsilon
-      if epsilon < 1e-1 or len(self.log) < 500:
-        self.acceleration = np.random.choice(acceleration_space)
+      if epsilon < 1e-2 or len(self.log) < 500:
         self.steer_angle = np.random.choice(steer_angle_space)
       # greedy
       else:
         if len(self.log) % 1000 == 0:
           # retrain model
-          self.q_model = xgb.XGBRegressor(nthread=4)
+          self.q_model = KNeighborsRegressor(n_jobs=4)
           self.q_model.fit(self.log, self.rewards)
         # use model to decide on action
         try:
           search = []
-          for acceleration in acceleration_space:
-            for steer_angle in steer_angle_space:
-              x = [[self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, acceleration, steer_angle]]
-              q = q_model.predict(x)[0]
-              search.append([acceleration, steer_angle, q])
+          for steer_angle in steer_angle_space:
+            x = [[self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, steer_angle]]
+            q = q_model.predict(x)[0]
+            search.append([steer_angle, q])
           search.sort(key=lambda row: row[-1])
           best = search[-1]
-          self.acceleration = best[0]
-          self.steer_angle = best[1]
+          self.steer_angle = best[0]
         except: # corner case for first training
-          self.acceleration = np.random.choice(acceleration_space)
           self.steer_angle = np.random.choice(steer_angle_space)
     # execute action
     self.car_model.drive(self.acceleration, self.brake, self.steer_angle)
