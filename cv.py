@@ -2,21 +2,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cPickle
 import sys
+import math
+
+import sklearn
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import MaxAbsScaler 
+from sklearn.metrics import mean_squared_error
+
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import SGDRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 
 def cv(model, x, y):
   errors = []
   kf = KFold(n_splits=10, shuffle=True)
-  for train_index, test_index in kf.split(log):
-    x_train, x_test = x[train_index], log[test_index]
-    y_train, y_test = y[train_index], rewards[test_index]
+  for train_index, test_index in kf.split(x):
+    x_train, x_test = x[train_index], x[test_index]
+    y_train, y_test = y[train_index], y[test_index]
 
-    x_scaler = StandardScaler()
-    y_scaler = StandardScaler()
+    x_scaler = MaxAbsScaler()
+    y_scaler = MaxAbsScaler()
    
     x_scaler.fit(x_train)
     y_scaler.fit(y_train)
@@ -26,11 +33,12 @@ def cv(model, x, y):
     yy_train = y_scaler.transform(y_train)
     yy_test = y_scaler.transform(y_test)
 
-    model.fit(xx_train, yy_train)
+    cv_model = sklearn.base.clone(model)
+    cv_model.fit(xx_train, yy_train)
 
-    yy_predicted = model.predict(xx_test)
+    yy_predicted = cv_model.predict(xx_test)
 
-    error = mean_squared_error(yy_test, yy_predicted)
+    error = math.sqrt(mean_squared_error(yy_test, yy_predicted))
     errors.append(error)
   return errors
 
@@ -45,6 +53,13 @@ if __name__ == "__main__":
   rewards = np.array(data["rewards"])
   rewards = rewards.reshape(-1, 1)
 
-  errors = cv(KNeighborsRegressor(), log, rewards)
+  x, y = sklearn.utils.resample(log, rewards, n_samples=100000)
 
-  print errors, np.mean(errors), np.std(errors)
+  errors = cv(KNeighborsRegressor(), x, y)
+  print "KNN", np.mean(errors), np.std(errors)
+  errors = cv(SGDRegressor(), x, y)
+  print "SGD", np.mean(errors), np.std(errors)
+  errors = cv(RandomForestRegressor(), x, y)
+  print "RandomForest", np.mean(errors), np.std(errors)
+  errors = cv(GradientBoostingRegressor(), x, y)
+  print "GradientBoosting", np.mean(errors), np.std(errors)
