@@ -4,8 +4,8 @@ from pygame.locals import *
 from pymunk import pygame_util
 from pymunk.vec2d import Vec2d
 import numpy as np
-from sklearn.linear_model import SGDRegressor
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.svm import SVR
+from sklearn.preprocessing import StandardScaler
 
 class CarModel:
   def __init__(self, space, position):
@@ -67,7 +67,7 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-1 or len(self.log) < 100:
+    if epsilon < 1e-1 or len(self.log) < 500:
       print "epsilon"
       self.acceleration = np.random.choice(np.linspace(-100.0, 100.0, 5))
       self.steer_angle = np.random.choice(np.linspace(-0.3, 0.3, 5))
@@ -76,16 +76,16 @@ class Car:
       print "greedy"
       # retrain model
       if len(self.log) > 0:
-        poly = PolynomialFeatures(degree=3)
-        xx = poly.fit_transform(self.log)
-        q_model = SGDRegressor()
+        scaler = StandardScaler()
+        xx = scaler.fit_transform(self.log)
+        q_model = SVR()
         q_model.fit(xx, self.rewards)
         # use model to decide on action
         search = []
         for acceleration in np.linspace(-100.0, 100.0, 5):
           for steer_angle in np.linspace(-0.3, 0.3, 5):
             x = [[self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, acceleration, steer_angle]]
-            xx = poly.transform(x)
+            xx = scaler.transform(x)
             q = q_model.predict(xx)[0]
             search.append([acceleration, steer_angle, q])
         search.sort(key=lambda row: row[-1])
@@ -114,9 +114,10 @@ if __name__ == "__main__":
     print "step:", i
     car.step()
     
+    # physical simulation
+    space.step(1/50.0)
     # drawing etc
-    space.step(1/20.0)
     screen.fill((255, 255, 255))
     space.debug_draw(draw_options)
     pygame.display.flip()
-    clock.tick(20)
+    clock.tick(50)
