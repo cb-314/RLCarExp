@@ -8,6 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 import xgboost as xgb
+import math
 
 class CarModel:
   def __init__(self, space, position):
@@ -60,11 +61,11 @@ class Car:
     self.log = []
     self.rewards = []
   def logging(self):
-    row = [self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, self.steer_angle]
+    row = [math.cos(self.car_model.body.angle), math.sin(self.car_model.body.angle), self.car_model.body.angular_velocity, self.car_model.body.velocity.x/200.0, self.car_model.body.velocity.y/200.0, self.steer_angle]
     self.log.append(row)
     self.rewards.append(self.reward)
   def step(self):
-    steer_angle_space = np.linspace(-0.2, 0.2, 21)
+    steer_angle_space = np.linspace(-0.2, 0.2, 101)
     # calculate last reward
     self.reward = self.car_model.body.position.x - self.last_position.x
     # don't decide every timestep
@@ -84,7 +85,7 @@ class Car:
         try:
           search = []
           for steer_angle in steer_angle_space:
-            x = [[self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, steer_angle]]
+            x = [[math.cos(self.car_model.body.angle), math.sin(self.car_model.body.angle), self.car_model.body.angular_velocity, self.car_model.body.velocity.x/200.0, self.car_model.body.velocity.y/200.0, steer_angle]]
             q = q_model.predict(x)[0]
             search.append([steer_angle, q])
           search.sort(key=lambda row: row[-1])
@@ -122,6 +123,7 @@ if __name__ == "__main__":
       plt.plot(position_log[-1].x, position_log[-1].y, "k.")
       plt.gca().set_aspect("equal", "datalim")
       plt.title(str(i)+" "+str(np.sum(car.rewards)))
+
       plt.pause(1e-3)
       plt.draw()
 
