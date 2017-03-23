@@ -12,6 +12,11 @@ class Car:
     self.body.position = position
     self.poly = pymunk.Poly.create_box(self.body, self.size)
     space.add(self.body, self.poly)
+  def drive(self, acceleration, brake, steer_angle):
+    self.accelerate(acceleration)
+    self.brake(brake)
+    self.front_wheel(steer_angle)
+    self.back_wheel()
   def accelerate(self, force):
     car.body.apply_force_at_local_point((force, 0.0), (-self.size[0]/2.0, 0.0))
   def brake(self, force):
@@ -50,6 +55,7 @@ if __name__ == "__main__":
 
   draw_options = pygame_util.DrawOptions(screen)
   for i in range(3000):
+    
     acceleration = 0.0
     brake = 0.0
     steer_angle = 0.0
@@ -64,12 +70,9 @@ if __name__ == "__main__":
     if keys[pygame.K_RIGHT]:
       steer_angle = -0.1
     pygame.event.pump()
-
-    car.accelerate(acceleration)
-    car.brake(brake)
-    car.front_wheel(steer_angle)
-    car.back_wheel()
     
+    car.drive(acceleration, brake, steer_angle)
+
     space.step(1/100.0)
     screen.fill((255, 255, 255))
     space.debug_draw(draw_options)
