@@ -78,11 +78,9 @@ class Car:
       print "greedy"
       # retrain model
       if len(self.log) > 0:
-        print "fit"
         q_model = KNeighborsRegressor()
         q_model.fit(self.log, self.rewards)
         # use model to decide on action
-        print "search"
         search = []
         for acceleration in np.linspace(-100.0, 100.0, 5):
           for steer_angle in np.linspace(-0.3, 0.3, 5):
@@ -91,7 +89,6 @@ class Car:
             search.append([acceleration, steer_angle, q])
         search.sort(key=lambda row: row[-1])
         best = search[-1]
-        print "done"
         self.acceleration = best[0]
         self.steer_angle = best[1]
     # execute action
