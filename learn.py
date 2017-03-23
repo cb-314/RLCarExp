@@ -70,7 +70,7 @@ class Car:
     if epsilon < 1e-1 or len(self.log) < 1000:
       print "epsilon"
       self.acceleration, self.steer_angle = np.random.rand(2)
-      self.acceleration = 100*(self.acceleration*2.0 -1.0)
+      self.acceleration = 100*(self.acceleration*2.0 - 1.0)
       self.steer_angle = 0.3*(self.steer_angle*2.0 - 1.0)
     # greedy
     else:
@@ -108,7 +108,7 @@ if __name__ == "__main__":
   
   car = Car(space, (200, 400))
   
-  for i in range(10000):
+  for i in range(30000):
     print "step:", i
     car.step()
     
