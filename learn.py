@@ -4,8 +4,8 @@ from pygame.locals import *
 from pymunk import pygame_util
 from pymunk.vec2d import Vec2d
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import PolynomialFeatures
 
 class CarModel:
   def __init__(self, space, position):
@@ -67,24 +67,26 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-1 or len(self.log) < 1000:
+    if epsilon < 1e-1 or len(self.log) < 100:
       print "epsilon"
-      self.acceleration, self.steer_angle = np.random.rand(2)
-      self.acceleration = 100*(self.acceleration*2.0 - 1.0)
-      self.steer_angle = 0.3*(self.steer_angle*2.0 - 1.0)
+      self.acceleration = np.random.choice(np.linspace(-100.0, 100.0, 5))
+      self.steer_angle = np.random.choice(np.linspace(-0.3, 0.3, 5))
     # greedy
     else:
       print "greedy"
       # retrain model
       if len(self.log) > 0:
-        q_model = KNeighborsRegressor()
-        q_model.fit(self.log, self.rewards)
+        poly = PolynomialFeatures(degree=3)
+        xx = poly.fit_transform(self.log)
+        q_model = SGDRegressor()
+        q_model.fit(xx, self.rewards)
         # use model to decide on action
         search = []
         for acceleration in np.linspace(-100.0, 100.0, 5):
           for steer_angle in np.linspace(-0.3, 0.3, 5):
             x = [[self.car_model.body.angle, self.car_model.body.angular_velocity, self.car_model.body.velocity.x, self.car_model.body.velocity.y, acceleration, steer_angle]]
-            q = q_model.predict(x)[0]
+            xx = poly.transform(x)
+            q = q_model.predict(xx)[0]
             search.append([acceleration, steer_angle, q])
         search.sort(key=lambda row: row[-1])
         best = search[-1]
@@ -113,8 +115,8 @@ if __name__ == "__main__":
     car.step()
     
     # drawing etc
-    space.step(1/100.0)
+    space.step(1/20.0)
     screen.fill((255, 255, 255))
     space.debug_draw(draw_options)
     pygame.display.flip()
-    clock.tick(100)
+    clock.tick(20)
