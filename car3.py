@@ -12,11 +12,23 @@ class Car:
     self.body.position = position
     self.poly = pymunk.Poly.create_box(self.body, self.size)
     space.add(self.body, self.poly)
+    self.log = {}
+    self.log["front"] = []
+    self.log["center"] = []
+    self.log["back"] = []
+    self.logging()
   def drive(self, acceleration, brake, steer_angle):
     self.accelerate(acceleration)
     self.brake(brake)
     self.front_wheel(steer_angle)
     self.back_wheel()
+    self.logging()
+  def logging(self):
+    temp = Vec2d(self.size[0]/2.0, 0.0)
+    temp.rotate(self.body.angle)
+    self.log["front"].append(self.body.position + temp)
+    self.log["center"].append(self.body.position)
+    self.log["back"].append(self.body.position - temp)
   def accelerate(self, force):
     car.body.apply_force_at_local_point((force, 0.0), (-self.size[0]/2.0, 0.0))
   def brake(self, force):
@@ -76,5 +88,9 @@ if __name__ == "__main__":
     space.step(1/100.0)
     screen.fill((255, 255, 255))
     space.debug_draw(draw_options)
+    w, h = pygame.display.get_surface().get_size()
+    pygame.draw.aalines(screen, [255,0,0], False, [(point.x, h-point.y) for point in car.log["front"][-500:]])
+    pygame.draw.aalines(screen, [0,0,0], False, [(point.x, h-point.y) for point in car.log["center"][-500:]])
+    pygame.draw.aalines(screen, [0,255,0], False, [(point.x, h-point.y) for point in car.log["back"][-500:]])
     pygame.display.flip()
     clock.tick(100)
