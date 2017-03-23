@@ -9,6 +9,7 @@ from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 import xgboost as xgb
 import math
+import cPickle
 
 class CarModel:
   def __init__(self, space, position):
@@ -64,6 +65,9 @@ class Car:
     row = [math.cos(self.car_model.body.angle), math.sin(self.car_model.body.angle), self.car_model.body.angular_velocity, self.car_model.body.velocity.x/200.0, self.car_model.body.velocity.y/200.0, self.steer_angle]
     self.log.append(row)
     self.rewards.append(self.reward)
+    if len(self.log) % 10000 == 0:
+      with open("log.pick", "wb") as out_file:
+        cPickle.dump({"log": self.log, "rewards": self.rewards}, out_file)
   def step(self):
     steer_angle_space = np.linspace(-0.2, 0.2, 101)
     # calculate last reward
@@ -73,7 +77,7 @@ class Car:
       # epsilon-greedy
       epsilon = np.random.rand(1)[0]
       #epsilon
-      if epsilon < 1e-2 or len(self.log) < 500:
+      if epsilon < 1e-2 or len(self.log) < 5000:
         self.steer_angle = np.random.choice(steer_angle_space)
       # greedy
       else:
@@ -113,7 +117,8 @@ if __name__ == "__main__":
   car = Car(space, (200, 400))
   
   plt.ion()
-  for i in range(1000000):
+  i = 0
+  while True:
     car.step()
     position_log.append(car.car_model.body.position)
 
@@ -134,3 +139,5 @@ if __name__ == "__main__":
 #    space.debug_draw(draw_options)
 #    pygame.display.flip()
 #    clock.tick(50)
+    # counter
+    i = i +1
