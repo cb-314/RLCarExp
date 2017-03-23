@@ -69,10 +69,9 @@ class Car:
     #epsilon
     if epsilon < 1e-1 or len(self.log) < 1000:
       print "epsilon"
-      self.acceleration, self.brake, self.steer_angle = np.random.rand(3)
-      self.acceleration = self.acceleration * 100
-      self.brake = self.brake * 200
-      self.steer_angle = self.steer_angle*0.6 - 0.3
+      self.acceleration, self.steer_angle = np.random.rand(2)
+      self.acceleration = 100*(self.acceleration*2.0 -1.0)
+      self.steer_angle = 0.3*(self.steer_angle*2.0 - 1.0)
     # greedy
     else:
       print "greedy"
