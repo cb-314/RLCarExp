@@ -31,8 +31,8 @@ if __name__ == "__main__":
     yy_train = y_scaler.transform(y_train)
     yy_test = y_scaler.transform(y_test)
 
-    model = KNeighborsRegressor()
-    model.fit(xx_train, yy_train)
+    q_model = KNeighborsRegressor()
+    q_model.fit(xx_train, yy_train)
 
     yy_predicted = model.predict(xx_test)
 
