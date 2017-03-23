@@ -43,7 +43,7 @@ class Car:
     steer_vector = Vec2d(1.0, 0.0)
     steer_vector.rotate(self.body.angle + steer_angle)
     friction_parallel = -0.1*velocity_wheel.dot(steer_vector)
-    friction_perpendicular = -1.0*velocity_wheel.dot(steer_vector.perpendicular())
+    friction_perpendicular = -3.0*velocity_wheel.dot(steer_vector.perpendicular())
     friction = Vec2d(friction_parallel, friction_perpendicular)
     car.body.apply_force_at_local_point(friction, (self.size[0]/2.0, 0.0))
   def back_wheel(self):
@@ -51,7 +51,7 @@ class Car:
     steer_vector = Vec2d(1.0, 0.0)
     steer_vector.rotate(self.body.angle)
     friction_parallel = -0.1*velocity_wheel.dot(steer_vector)
-    friction_perpendicular = -1.0*velocity_wheel.dot(steer_vector.perpendicular())
+    friction_perpendicular = -3.0*velocity_wheel.dot(steer_vector.perpendicular())
     friction = Vec2d(friction_parallel, friction_perpendicular)
     car.body.apply_force_at_local_point(friction, (-self.size[0]/2.0, 0.0))
 
@@ -91,6 +91,6 @@ if __name__ == "__main__":
     w, h = pygame.display.get_surface().get_size()
     pygame.draw.aalines(screen, [255,0,0], False, [(point.x, h-point.y) for point in car.log["front"][-500:]])
     pygame.draw.aalines(screen, [0,0,0], False, [(point.x, h-point.y) for point in car.log["center"][-500:]])
-    pygame.draw.aalines(screen, [0,255,0], False, [(point.x, h-point.y) for point in car.log["back"][-500:]])
+    pygame.draw.aalines(screen, [0,0,255], False, [(point.x, h-point.y) for point in car.log["back"][-500:]])
     pygame.display.flip()
     clock.tick(100)
