@@ -63,8 +63,8 @@ class Car:
     self.log.append(row)
     self.rewards.append(self.reward)
   def step(self):
-    acceleration_space = np.linspace(0.0, 100.0, 10)
-    steer_angle_space = np.linspace(-0.3, 0.3, 11)
+    acceleration_space = np.linspace(0.0, 100.0, 20)
+    steer_angle_space = np.linspace(-0.2, 0.2, 21)
     # calculate last reward
     self.reward = self.car_model.body.position.x - self.last_position.x
     # don't decide every timestep
@@ -77,7 +77,7 @@ class Car:
         self.steer_angle = np.random.choice(steer_angle_space)
       # greedy
       else:
-        if len(self.log) % 500 == 0:
+        if len(self.log) % 1000 == 0:
           # retrain model
           self.q_model = xgb.XGBRegressor(nthread=4)
           self.q_model.fit(self.log, self.rewards)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(car.car_model.body.position)
 
-    if i % 500 == 0:
+    if i % 1000 == 0:
       plt.clf()
       plt.plot([p.x for p in position_log], [p.y for p in position_log], "k-")
       plt.plot(position_log[-1].x, position_log[-1].y, "k.")
