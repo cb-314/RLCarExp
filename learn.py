@@ -106,7 +106,7 @@ if __name__ == "__main__":
   space = pymunk.Space() 
   space.gravity = (0, 0)
   
-  car = Car(space, (0, 500))
+  car = Car(space, (500, 500))
   
   for i in range(10000):
     print "step:", i
