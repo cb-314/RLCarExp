@@ -74,7 +74,7 @@ class Car:
     else:
       if len(self.log) % 500 == 0:
         # retrain model
-        self.q_model = RandomForestRegressor()
+        self.q_model = RandomForestRegressor(n_estimators=100, n_jobs=4, min_samples_leaf=0.05)
         self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       try:
@@ -111,7 +111,7 @@ if __name__ == "__main__":
   car = Car(space, (200, 400))
   
   plt.ion()
-  for i in range(30000):
+  for i in range(100000):
     car.step()
     position_log.append(car.car_model.body.position)
 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
       plt.plot([p.x for p in position_log], [p.y for p in position_log], "k-")
       plt.plot(position_log[-1].x, position_log[-1].y, "k.")
       plt.gca().set_aspect("equal", "datalim")
-      plt.title(str(i))
+      plt.title(str(i)+" "+str(np.sum(car.rewards)))
       plt.pause(1e-3)
       plt.draw()
 
