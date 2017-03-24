@@ -52,7 +52,7 @@ class Car:
       # use model to decide on action
       search = []
       for steer_angle in steer_angle_space:
-        x = [[self.car_model.velocity[0], self.car_model.velocity[1], self.steer_angle]]
+        x = [[self.car_model.velocity[0], self.car_model.velocity[1], steer_angle]]
         q = self.q_model.predict(x)[0]
         search.append([steer_angle, q])
       print search
