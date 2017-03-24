@@ -76,7 +76,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if t % 1000 == 0 and t > 5000:
+    if t % 1000 == 0 and t >= 5000:
       plt.clf()
       plt.suptitle(str(t)+" "+str(np.sum(car.rewards)))
       plt.subplot(221)
@@ -90,8 +90,8 @@ if __name__ == "__main__":
       plt.title("steer_angle hist")
       plt.hist([p[1] for p in car.log])
       plt.subplot(223)
-      plt.title("angle vs. steer_angle")
-      plt.hexbin([p[0] for p in car.log], [p[1] for p in car.log], gridsize=30)
+      plt.title("angle vs. steer_angle vs. reward")
+      plt.hexbin([p[0] for p in car.log], [p[1] for p in car.log], car.rewards, gridsize=20)
       plt.xlabel("angle")
       plt.ylabel("steerangle")
       plt.colorbar()
@@ -102,7 +102,7 @@ if __name__ == "__main__":
       for i, v in enumerate(va):
         for j, s in enumerate(sa):
           q[i,j] = car.q_model.predict([[v, s]])
-      plt.pcolormesh(va, sa, q)
+      plt.pcolormesh(va, sa, q.T)
       cbar = plt.colorbar()
       cbar.set_label("q")
       plt.xlabel("angle")
