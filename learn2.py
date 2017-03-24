@@ -35,19 +35,19 @@ class Car:
       with open("log2.pick", "wb") as out_file:
         cPickle.dump({"log": self.log, "rewards": self.rewards}, out_file)
   def step(self):
-    steer_angle_space = np.linspace(-0.1, 0.1, 3)
+    steer_angle_space = np.linspace(-0.2, 0.2, 21)
     # calculate last reward
     self.reward = self.car_model.position[0] - self.last_position[0]
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-1 or len(self.log) < 500:
+    if epsilon < 1e-2 or len(self.log) < 500:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
       if len(self.log) % 100 == 0:
         # retrain model
-        self.q_model = SGDRegressor()
+        self.q_model = KNeighborsRegressor()
         self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       search = []
@@ -55,9 +55,7 @@ class Car:
         x = [[self.car_model.velocity[0], self.car_model.velocity[1], steer_angle]]
         q = self.q_model.predict(x)[0]
         search.append([steer_angle, q])
-      print search
-      search = sorted(search, key=lambda row: row[-1])
-      print search
+      search.sort(key=lambda row: row[-1])
       best = search[-1]
       self.steer_angle = best[0]
     # update last_position and logging
@@ -69,18 +67,18 @@ class Car:
 if __name__ == "__main__":
   position_log = []
 
-  car = Car(1e-1)
+  car = Car(1e-2)
   
   plt.ion()
-  i = 0
+  t = 0
   while True:
-    print i
+    print t
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if i % 1000 == 0 and i > 0:
+    if t % 1000 == 0 and t > 0:
       plt.clf()
-      plt.suptitle(str(i)+" "+str(np.sum(car.rewards)))
+      plt.suptitle(str(t)+" "+str(np.sum(car.rewards)))
       plt.subplot(221)
       plt.title("trajectory")
       plt.plot([p[0] for p in position_log], [p[1] for p in position_log], "k-")
@@ -99,7 +97,7 @@ if __name__ == "__main__":
       plt.colorbar()
       plt.subplot(224)
       va = np.linspace(-np.pi, np.pi, 21)
-      sa = np.linspace(-0.1, 0.1, 21)
+      sa = np.linspace(-0.2, 0.2, 21)
       q = np.empty((len(va), len(sa)))
       for i, v in enumerate(va):
         for j, s in enumerate(sa):
@@ -111,4 +109,4 @@ if __name__ == "__main__":
       plt.ylabel("steerangle")
       plt.pause(1e-3)
       plt.draw()
-    i = i +1
+    t = t +1
