@@ -28,7 +28,7 @@ class Car:
     self.log = []
     self.rewards = []
   def logging(self):
-    row = [self.car_model.velocity[0], self.car_model.velocity[1], self.steer_angle]
+    row = [math.atan2(self.car_model.velocity[1], self.car_model.velocity[0]), self.steer_angle]
     self.log.append(row)
     self.rewards.append(self.reward)
     if len(self.log) % 100000 == 0:
@@ -52,7 +52,7 @@ class Car:
       # use model to decide on action
       search = []
       for steer_angle in steer_angle_space:
-        x = [[self.car_model.velocity[0], self.car_model.velocity[1], steer_angle]]
+        x = [[math.atan2(self.car_model.velocity[1], self.car_model.velocity[0]), steer_angle]]
         q = self.q_model.predict(x)[0]
         search.append([steer_angle, q])
       search.sort(key=lambda row: row[-1])
@@ -88,10 +88,10 @@ if __name__ == "__main__":
       plt.gca().set_aspect("equal", "datalim")
       plt.subplot(222)
       plt.title("steer_angle hist")
-      plt.hist([p[2] for p in car.log])
+      plt.hist([p[1] for p in car.log])
       plt.subplot(223)
       plt.title("angle vs. steer_angle")
-      plt.hexbin([math.atan2(p[1], p[0]) for p in car.log], [p[2] for p in car.log], gridsize=30)
+      plt.hexbin([p[0] for p in car.log], [p[1] for p in car.log], gridsize=30)
       plt.xlabel("angle")
       plt.ylabel("steerangle")
       plt.colorbar()
@@ -101,7 +101,7 @@ if __name__ == "__main__":
       q = np.empty((len(va), len(sa)))
       for i, v in enumerate(va):
         for j, s in enumerate(sa):
-          q[i,j] = car.q_model.predict([[math.cos(v), math.sin(v), s]])
+          q[i,j] = car.q_model.predict([[v, s]])
       plt.pcolormesh(va, sa, q)
       cbar = plt.colorbar()
       cbar.set_label("q")
