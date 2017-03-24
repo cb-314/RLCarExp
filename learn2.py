@@ -41,13 +41,13 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-2 or len(self.log) < 500:
+    if epsilon < 1e-1 or len(self.log) < 500:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
       if len(self.log) % 100 == 0:
         # retrain model
-        self.q_model = RandomForestRegressor()
+        self.q_model = SGDRegressor()
         self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       search = []
@@ -76,13 +76,25 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if i % 100 == 0:
+    if i % 1000 == 0:
       plt.clf()
+      plt.suptitle(str(i)+" "+str(np.sum(car.rewards)))
+      plt.subplot(221)
+      plt.title("trajectory")
       plt.plot([p[0] for p in position_log], [p[1] for p in position_log], "k-")
       plt.plot(position_log[-1][0], position_log[-1][1], "k.")
+      plt.xlabel("x")
+      plt.ylabel("y")
       plt.gca().set_aspect("equal", "datalim")
-      plt.title(str(i)+" "+str(np.sum(car.rewards)))
-
+      plt.subplot(222)
+      plt.title("steer_angle hist")
+      plt.hist([p[2] for p in car.log])
+      plt.subplot(223)
+      plt.title("angle vs. steer_angle")
+      plt.hexbin([math.atan2(p[1], p[0]) for p in car.log], [p[2] for p in car.log], gridsize=30)
+      plt.xlabel("angle")
+      plt.ylabel("steerangle")
+      plt.colorbar()
       plt.pause(1e-3)
       plt.draw()
     i = i +1
