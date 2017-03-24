@@ -35,7 +35,7 @@ class Car:
       with open("log2.pick", "wb") as out_file:
         cPickle.dump({"log": self.log, "rewards": self.rewards}, out_file)
   def step(self):
-    steer_angle_space = np.linspace(-0.2, 0.2, 21)
+    steer_angle_space = np.linspace(-0.1, 0.1, 3)
     # calculate last reward
     self.reward = self.car_model.position[0] - self.last_position[0]
     # epsilon-greedy
@@ -55,7 +55,9 @@ class Car:
         x = [[self.car_model.velocity[0], self.car_model.velocity[1], self.steer_angle]]
         q = self.q_model.predict(x)[0]
         search.append([steer_angle, q])
-      search.sort(key=lambda row: row[-1])
+      print search
+      search = sorted(search, key=lambda row: row[-1])
+      print search
       best = search[-1]
       self.steer_angle = best[0]
     # update last_position and logging
@@ -76,7 +78,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if i % 1000 == 0:
+    if i % 1000 == 0 and i > 0:
       plt.clf()
       plt.suptitle(str(i)+" "+str(np.sum(car.rewards)))
       plt.subplot(221)
@@ -95,6 +97,18 @@ if __name__ == "__main__":
       plt.xlabel("angle")
       plt.ylabel("steerangle")
       plt.colorbar()
+      plt.subplot(224)
+      va = np.linspace(-np.pi, np.pi, 21)
+      sa = np.linspace(-0.1, 0.1, 21)
+      q = np.empty((len(va), len(sa)))
+      for i, v in enumerate(va):
+        for j, s in enumerate(sa):
+          q[i,j] = car.q_model.predict([[math.cos(v), math.sin(v), s]])
+      plt.pcolormesh(va, sa, q)
+      cbar = plt.colorbar()
+      cbar.set_label("q")
+      plt.xlabel("angle")
+      plt.ylabel("steerangle")
       plt.pause(1e-3)
       plt.draw()
     i = i +1
