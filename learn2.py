@@ -40,7 +40,7 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e2 or len(self.log) < 5000:
+    if epsilon < 1e-2 or len(self.log) < 5000:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
@@ -59,6 +59,7 @@ class Car:
         best = search[-1]
         self.steer_angle = best[0]
       except: # corner case for first training
+        print "except"
         self.steer_angle = np.random.choice(steer_angle_space)
     # update last_position and logging
     self.last_position = np.array(self.car_model.position)
