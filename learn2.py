@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.linear_model import SGDRegressor
+from sklearn.svm import SVR
 import matplotlib.pyplot as plt
 import math
 import cPickle
@@ -41,13 +41,13 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-2 or len(self.log) < 500:
+    if epsilon < 1e-2 or len(self.log) < 5000:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
-      if len(self.log) % 100 == 0:
+      if len(self.log) % 1000 == 0:
         # retrain model
-        self.q_model = KNeighborsRegressor()
+        self.q_model = SVR()
         self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       search = []
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if t % 1000 == 0 and t > 0:
+    if t % 1000 == 0 and t > 5000:
       plt.clf()
       plt.suptitle(str(t)+" "+str(np.sum(car.rewards)))
       plt.subplot(221)
