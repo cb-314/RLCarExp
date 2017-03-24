@@ -47,7 +47,7 @@ class Car:
     else:
       if len(self.log) % 1000 == 0:
         # retrain model
-        self.q_model = SVR()
+        self.q_model = KNeighborsRegressor(n_neighbors=100, weights="distance")
         self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       search = []
