@@ -1,5 +1,5 @@
 # RLCarExp
-Reinforcement learning experiments with a simulated car
+Reinforcement learning experiments with a simulated car.
 
 ## Details
 This implements very simplistic q-learning (I think) and the car is simulated
