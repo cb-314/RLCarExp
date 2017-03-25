@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import math
 import cPickle
 import h5py
-from pymunk import pygame_util
+import pymunk
 from pymunk.vec2d import Vec2d
 
 class CarModelSimple:
@@ -29,12 +29,15 @@ class CarModelMunk:
     self.mass = 1.0
     self.size = (20, 10)
     self.body = pymunk.Body(self.mass, pymunk.moment_for_box(self.mass, self.size)) 
-    self.body.position = Vec2d(0,0)
     self.poly = pymunk.Poly.create_box(self.body, self.size)
-    space.add(self.body, self.poly)
+    self.space.add(self.body, self.poly)
+    self.position = np.array([self.body.position[0], self.body.position[1]])
+    self.velocity = np.array([self.body.velocity[0], self.body.velocity[1]])
   def step(self, steer_angle, dt):
     self.drive(100.0, 0.0, steer_angle)
-    space.step(dt)
+    self.space.step(dt)
+    self.position = np.array([self.body.position[0], self.body.position[1]])
+    self.velocity = np.array([self.body.velocity[0], self.body.velocity[1]])
   def drive(self, acceleration, brake, steer_angle):
     self.accelerate(acceleration)
     self.brake(brake)
@@ -69,7 +72,7 @@ class CarModelMunk:
 class Car:
   def __init__(self, dt):
     self.dt = dt
-    self.car_model = CarModelSimple()
+    self.car_model = CarModelMunk()
     self.steer_angle = 0.0
     self.reward = 0.0
     self.epsilon0 = 0.0
