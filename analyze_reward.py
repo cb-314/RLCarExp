@@ -35,7 +35,7 @@ if __name__ == "__main__":
   grad_q = np.gradient(q)
 
   plt.title("angle vs. steer_angle vs. reward")
-  plt.pcolormesh(va, sa, grad_q[0], vmin=-1e-5, vmax=1e-5)
+  plt.pcolormesh(va, sa, grad_q[0], vmin=np.percentile(grad_q[0].flatten(), 5), vmax=np.percentile(grad_q[0].flatten(), 95))
   plt.xlabel("angle")
   plt.ylabel("steerangle")
   plt.colorbar()
