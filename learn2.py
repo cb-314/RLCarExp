@@ -21,7 +21,6 @@ class Car:
   def __init__(self, dt):
     self.dt = dt
     self.car_model = CarModel()
-    self.last_position = np.array(self.car_model.position)
     self.steer_angle = 0.0
     self.reward = 0.0
     self.q_model = RandomForestRegressor(n_estimators=100)
@@ -36,8 +35,6 @@ class Car:
         cPickle.dump({"log": self.log, "rewards": self.rewards}, out_file)
   def step(self):
     steer_angle_space = np.linspace(-0.2, 0.2, 21)
-    # calculate last reward
-    self.reward = self.car_model.position[0] - self.last_position[0]
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
@@ -61,8 +58,12 @@ class Car:
     # update last_position and logging
     self.last_position = np.array(self.car_model.position)
     self.logging()
+    # remember position
+    last_position = np.array(self.car_model.position)
     # execute action
     self.car_model.step(self.steer_angle, self.dt)
+    # calculate reward
+    self.reward = self.car_model.position[0] - last_position[0]
 
 if __name__ == "__main__":
   position_log = []
