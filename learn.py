@@ -1,24 +1,43 @@
-import pymunk
-import pygame
-from pygame.locals import *
-from pymunk import pygame_util
-from pymunk.vec2d import Vec2d
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import SGDRegressor
+from sklearn.svm import SVR
+from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
-import xgboost as xgb
 import math
 import cPickle
+import h5py
+import pymunk
+from pymunk.vec2d import Vec2d
 
-class CarModel:
-  def __init__(self, space, position):
+class CarModelSimple:
+  def __init__(self):
+    self.position = np.array([0.0, 0.0])
+    self.velocity = np.array([1.0, 0.0])
+  def step(self, steer_angle, dt):
+    c = math.cos(steer_angle)
+    s = math.sin(steer_angle)
+    rot = np.array([[c, -s], [s, c]])
+    self.velocity = rot.dot(self.velocity)
+    self.position = self.position + dt * self.velocity
+
+class CarModelMunk:
+  def __init__(self):
+    self.space = pymunk.Space() 
+    self.space.gravity = (0, 0)
     self.mass = 1.0
     self.size = (20, 10)
     self.body = pymunk.Body(self.mass, pymunk.moment_for_box(self.mass, self.size)) 
-    self.body.position = position
     self.poly = pymunk.Poly.create_box(self.body, self.size)
-    space.add(self.body, self.poly)
+    self.space.add(self.body, self.poly)
+    self.position = np.array([self.body.position[0], self.body.position[1]])
+    self.velocity = np.array([self.body.velocity[0], self.body.velocity[1]])
+  def step(self, steer_angle, dt):
+    self.drive(100.0, 0.0, steer_angle)
+    self.space.step(dt)
+    self.position = np.array([self.body.position[0], self.body.position[1]])
+    self.velocity = np.array([self.body.velocity[0], self.body.velocity[1]])
   def drive(self, acceleration, brake, steer_angle):
     self.accelerate(acceleration)
     self.brake(brake)
@@ -51,93 +70,106 @@ class CarModel:
     self.body.apply_force_at_local_point(friction, (-self.size[0]/2.0, 0.0))
 
 class Car:
-  def __init__(self, space, position):
-    self.car_model = CarModel(space, position)
-    self.last_position = Vec2d(self.car_model.body.position)
-    self.acceleration = 50.0
-    self.brake = 0.0
+  def __init__(self, dt):
+    self.dt = dt
+    self.car_model = CarModelMunk()
     self.steer_angle = 0.0
     self.reward = 0.0
-    self.q_model = KNeighborsRegressor()
+    self.epsilon0 = 0.0
+    self.q_model = RandomForestRegressor(n_estimators=100)
     self.log = []
     self.rewards = []
   def logging(self):
-    row = [math.cos(self.car_model.body.angle), math.sin(self.car_model.body.angle), self.car_model.body.angular_velocity, self.car_model.body.velocity.x/200.0, self.car_model.body.velocity.y/200.0, self.steer_angle]
+    row = [math.atan2(self.car_model.velocity[1], self.car_model.velocity[0]), self.steer_angle]
     self.log.append(row)
     self.rewards.append(self.reward)
     if len(self.log) % 10000 == 0:
-      with open("log.pick", "wb") as out_file:
-        cPickle.dump({"log": self.log, "rewards": self.rewards}, out_file)
+      with h5py.File("log.hdf5", "w") as f:
+        f.create_dataset("log", data=np.array(self.log), chunks=True, compression="gzip")
+        f.create_dataset("rewards", data=np.array(self.rewards), chunks=True, compression="gzip")
   def step(self):
-    steer_angle_space = np.linspace(-0.2, 0.2, 101)
-    # calculate last reward
-    self.reward = self.car_model.body.position.x - self.last_position.x
-    # don't decide every timestep
-    if len(self.log) % 10:
-      # epsilon-greedy
-      epsilon = np.random.rand(1)[0]
-      #epsilon
-      if epsilon < 1e-2 or len(self.log) < 5000:
-        self.steer_angle = np.random.choice(steer_angle_space)
-      # greedy
-      else:
-        if len(self.log) % 1000 == 0:
-          # retrain model
-          self.q_model = KNeighborsRegressor(n_jobs=4)
-          self.q_model.fit(self.log, self.rewards)
-        # use model to decide on action
-        try:
-          search = []
-          for steer_angle in steer_angle_space:
-            x = [[math.cos(self.car_model.body.angle), math.sin(self.car_model.body.angle), self.car_model.body.angular_velocity, self.car_model.body.velocity.x/200.0, self.car_model.body.velocity.y/200.0, steer_angle]]
-            q = q_model.predict(x)[0]
-            search.append([steer_angle, q])
-          search.sort(key=lambda row: row[-1])
-          best = search[-1]
-          self.steer_angle = best[0]
-        except: # corner case for first training
-          self.steer_angle = np.random.choice(steer_angle_space)
+    steer_angle_space = np.linspace(-0.2, 0.2, 21)
+    # epsilon-greedy
+    epsilon = np.random.rand(1)[0]
+    #epsilon
+    if len(self.log) % 100 == 0 and len(self.log) > 0:
+      # retrain model
+      self.q_model = RandomForestRegressor()
+      self.q_model.fit(self.log, self.rewards)
+    if len(self.log) > 500:
+      self.epsilon0 = 1e-2 + 5e-1 * math.exp(-2e-3*len(self.log))
+    else:
+      self.epsilon0 = 1.0
+    if epsilon < self.epsilon0:
+      self.steer_angle = np.random.choice(steer_angle_space)
+    # greedy
+    else:
+      # use model to decide on action
+      search = []
+      for steer_angle in steer_angle_space:
+        x = [[math.atan2(self.car_model.velocity[1], self.car_model.velocity[0]), steer_angle]]
+        q = self.q_model.predict(x)[0]
+        search.append([steer_angle, q])
+      search.sort(key=lambda row: row[-1])
+      best = search[-1]
+      self.steer_angle = best[0]
+    # remember position
+    last_velocity = np.array(self.car_model.velocity)
     # execute action
-    self.car_model.drive(self.acceleration, self.brake, self.steer_angle)
-    # update last_position and logging
-    self.last_position = Vec2d(self.car_model.body.position)
+    self.car_model.step(self.steer_angle, self.dt)
+    # calculate reward
+    self.reward = -abs(math.atan2(self.car_model.velocity[1], self.car_model.velocity[0])/np.pi) + abs(math.atan2(last_velocity[1], last_velocity[0])/np.pi)
+    # logging
     self.logging()
 
 if __name__ == "__main__":
-#  pygame.init()
-#  screen = pygame.display.set_mode((1600, 800))
-#  clock = pygame.time.Clock()
-#  draw_options = pygame_util.DrawOptions(screen)
-
-  space = pymunk.Space() 
-  space.gravity = (0, 0)
- 
   position_log = []
 
-  car = Car(space, (200, 400))
+  car = Car(1e-2)
   
   plt.ion()
-  i = 0
+  t = 0
   while True:
+    print t
     car.step()
-    position_log.append(car.car_model.body.position)
+    position_log.append(np.array(car.car_model.position))
 
-    if i % 1000 == 0:
+#    if t% 200 == 0 and t >500:
+#      impulse = np.random.uniform(-200, 200)
+#      car.car_model.body.apply_impulse_at_local_point((0.0, impulse), (car.car_model.size[0]/2.0, 0.0))
+
+    if t % 100 == 0 and t >= 500:
       plt.clf()
-      plt.plot([p.x for p in position_log], [p.y for p in position_log], "k-")
-      plt.plot(position_log[-1].x, position_log[-1].y, "k.")
+      plt.suptitle(str(t)+" "+"{:.3f}".format(np.sum(car.rewards))+" "+"{:.3f}".format(car.epsilon0))
+      plt.subplot(221)
+      plt.title("trajectory")
+      plt.plot([p[0] for p in position_log], [p[1] for p in position_log], "k-")
+      plt.plot(position_log[-1][0], position_log[-1][1], "k.")
+      plt.xlabel("x")
+      plt.ylabel("y")
       plt.gca().set_aspect("equal", "datalim")
-      plt.title(str(i)+" "+str(np.sum(car.rewards)))
-
+      plt.subplot(222)
+      plt.title("angle vs. steer_angle vs. reward")
+      plt.hist([p[1] for p in car.log])
+      plt.subplot(223)
+      plt.title("angle vs. steer_angle vs. reward")
+      plt.hexbin([p[0] for p in car.log], [p[1] for p in car.log], car.rewards, gridsize=20)
+      plt.xlabel("angle")
+      plt.ylabel("steerangle")
+      plt.colorbar()
+      plt.subplot(224)
+      plt.title("q_model")
+      va = np.linspace(-np.pi, np.pi, 21)
+      sa = np.linspace(-0.2, 0.2, 21)
+      q = np.empty((len(va), len(sa)))
+      for i, v in enumerate(va):
+        for j, s in enumerate(sa):
+          q[i,j] = car.q_model.predict([[v, s]])
+      plt.pcolormesh(va, sa, q.T)
+      cbar = plt.colorbar()
+      cbar.set_label("q")
+      plt.xlabel("angle")
+      plt.ylabel("steerangle")
       plt.pause(1e-3)
       plt.draw()
-
-    # physical simulation
-    space.step(1/100.0)
-    # drawing etc
-#    screen.fill((255, 255, 255))
-#    space.debug_draw(draw_options)
-#    pygame.display.flip()
-#    clock.tick(50)
-    # counter
-    i = i +1
+    t = t +1
