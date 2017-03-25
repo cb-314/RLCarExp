@@ -42,7 +42,7 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if len(self.log) % 100 == 0:
+    if len(self.log) % 100 == 0 and len(self.log) > 0:
       # retrain model
       self.q_model = KNeighborsRegressor(n_neighbors=10, weights="distance")
       self.q_model.fit(self.log, self.rewards)
