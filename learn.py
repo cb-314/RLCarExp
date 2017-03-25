@@ -6,7 +6,6 @@ from sklearn.svm import SVR
 from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
 import math
-import cPickle
 import h5py
 import pymunk
 from pymunk.vec2d import Vec2d
@@ -23,6 +22,18 @@ class CarModelSimple:
     self.position = self.position + dt * self.velocity
 
 class CarModelMunk:
+  """ A simple car model, based on only two instead of four wheels. Both wheels
+  are implemented as a single contact point with anisotropic friction.
+  Speciffically, this means that friction against movement in one direction
+  ("rolling") has a lot less (right now 30 times less) friction that in the
+  perpendicular direction ("skidding"). Additionally, the front wheel can be
+  rotated to some degree, which is modelled instantaneously. The heavy lifting
+  of the physics calculations with impulses, moment of inertia, torques applied
+  by the wheels, and so on is performend by pymuk by modelling the car as a
+  simple box with one wheel at each end. The anisotropic friction is
+  implemented by hand applying the forces directly as pymunk does not implement
+  anisotropic friction. The dynamics seem to be allright with the current
+  parametrization by playing a bit with it."""
   def __init__(self):
     self.space = pymunk.Space() 
     self.space.gravity = (0, 0)
@@ -113,7 +124,7 @@ class Car:
       search.sort(key=lambda row: row[-1])
       best = search[-1]
       self.steer_angle = best[0]
-    # remember position
+    # remember velocity
     last_velocity = np.array(self.car_model.velocity)
     # execute action
     self.car_model.step(self.steer_angle, self.dt)
@@ -134,6 +145,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
+#    # kicks
 #    if t% 200 == 0 and t >500:
 #      impulse = np.random.uniform(-200, 200)
 #      car.car_model.body.apply_impulse_at_local_point((0.0, impulse), (car.car_model.size[0]/2.0, 0.0))
