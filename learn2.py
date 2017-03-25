@@ -31,20 +31,20 @@ class Car:
     row = [math.atan2(self.car_model.velocity[1], self.car_model.velocity[0]), self.steer_angle]
     self.log.append(row)
     self.rewards.append(self.reward)
-    if len(self.log) % 100000 == 0:
+    if len(self.log) % 10000 == 0:
       with h5py.File("log2.hdf5", "w") as f:
-        f.create_dataset("log", data=np.array(self.log))
-        f.create_dataset("rewards", data=np.array(self.rewards))
+        f.create_dataset("log", data=np.array(self.log), chunks=True, compression="gzip")
+        f.create_dataset("rewards", data=np.array(self.rewards), chunks=True, compression="gzip")
   def step(self):
     steer_angle_space = np.linspace(-0.2, 0.2, 21)
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-2 or len(self.log) < 5000:
+    if epsilon < 1e-2 or len(self.log) < 500:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
-      if len(self.log) % 1000 == 0:
+      if len(self.log) % 100 == 0:
         # retrain model
         self.q_model = KNeighborsRegressor(n_neighbors=100, weights="distance")
         self.q_model.fit(self.log, self.rewards)
@@ -57,15 +57,14 @@ class Car:
       search.sort(key=lambda row: row[-1])
       best = search[-1]
       self.steer_angle = best[0]
-    # update last_position and logging
-    self.last_position = np.array(self.car_model.position)
-    self.logging()
     # remember position
     last_position = np.array(self.car_model.position)
     # execute action
     self.car_model.step(self.steer_angle, self.dt)
     # calculate reward
-    self.reward = self.car_model.position[0] - last_position[0]
+    self.reward = -abs(math.atan2(self.car_model.velocity[1], self.car_model.velocity[0])/np.pi)
+    # logging
+    self.logging()
 
 if __name__ == "__main__":
   position_log = []
@@ -79,7 +78,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if t % 1000 == 0 and t >= 5000:
+    if t % 1000 == 0 and t >= 500:
       plt.clf()
       plt.suptitle(str(t)+" "+str(np.sum(car.rewards)))
       plt.subplot(221)
