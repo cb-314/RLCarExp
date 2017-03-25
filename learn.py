@@ -33,7 +33,11 @@ class CarModelMunk:
   simple box with one wheel at each end. The anisotropic friction is
   implemented by hand applying the forces directly as pymunk does not implement
   anisotropic friction. The dynamics seem to be allright with the current
-  parametrization by playing a bit with it."""
+  parametrization by playing a bit with it.
+  
+  If you want to check out the car model evolution check the folder carmodels.
+  With carmodel3 you have more or less the current carmodelmunk and you have a
+  pygame interface to play with it using the arrow keys. """
   def __init__(self):
     self.space = pymunk.Space() 
     self.space.gravity = (0, 0)
