@@ -26,6 +26,7 @@ class Car:
     self.car_model = CarModel()
     self.steer_angle = 0.0
     self.reward = 0.0
+    self.epsilon0 = 0.0
     self.q_model = RandomForestRegressor(n_estimators=100)
     self.log = []
     self.rewards = []
@@ -46,7 +47,11 @@ class Car:
       # retrain model
       self.q_model = KNeighborsRegressor(n_neighbors=10, weights="distance")
       self.q_model.fit(self.log, self.rewards)
-    if epsilon < 1e-2 + 5e-1 * math.exp(1e-3*len(self.log)) or len(self.log) < 500:
+    if len(self.log) > 500:
+      self.epsilon0 = 1e-2 + 5e-1 * math.exp(-2e-3*len(self.log))
+    else:
+      self.epsilon0 = 1.0
+    if epsilon < self.epsilon0:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
@@ -82,7 +87,7 @@ if __name__ == "__main__":
 
     if t % 100 == 0 and t >= 500:
       plt.clf()
-      plt.suptitle(str(t)+" "+str(np.sum(car.rewards)))
+      plt.suptitle(str(t)+" "+"{:.2f}".format(np.sum(car.rewards))+" "+"{:.2f}".format(car.epsilon0))
       plt.subplot(221)
       plt.title("trajectory")
       plt.plot([p[0] for p in position_log], [p[1] for p in position_log], "k-")
