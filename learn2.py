@@ -134,6 +134,10 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
+#    if t% 200 == 0 and t >500:
+#      impulse = np.random.uniform(-200, 200)
+#      car.car_model.body.apply_impulse_at_local_point((0.0, impulse), (car.car_model.size[0]/2.0, 0.0))
+
     if t % 100 == 0 and t >= 500:
       plt.clf()
       plt.suptitle(str(t)+" "+"{:.3f}".format(np.sum(car.rewards))+" "+"{:.3f}".format(car.epsilon0))
