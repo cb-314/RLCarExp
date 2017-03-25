@@ -94,7 +94,7 @@ class Car:
     #epsilon
     if len(self.log) % 100 == 0 and len(self.log) > 0:
       # retrain model
-      self.q_model = KNeighborsRegressor(n_neighbors=10, weights="distance")
+      self.q_model = RandomForestRegressor()
       self.q_model.fit(self.log, self.rewards)
     if len(self.log) > 500:
       self.epsilon0 = 1e-2 + 5e-1 * math.exp(-2e-3*len(self.log))
