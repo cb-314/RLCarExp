@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 import math
 import cPickle
 import h5py
+from pymunk import pygame_util
+from pymunk.vec2d import Vec2d
 
-class CarModel:
+class CarModelSimple:
   def __init__(self):
     self.position = np.array([0.0, 0.0])
     self.velocity = np.array([1.0, 0.0])
@@ -20,10 +22,54 @@ class CarModel:
     self.velocity = rot.dot(self.velocity)
     self.position = self.position + dt * self.velocity
 
+class CarModelMunk:
+  def __init__(self):
+    self.space = pymunk.Space() 
+    self.space.gravity = (0, 0)
+    self.mass = 1.0
+    self.size = (20, 10)
+    self.body = pymunk.Body(self.mass, pymunk.moment_for_box(self.mass, self.size)) 
+    self.body.position = Vec2d(0,0)
+    self.poly = pymunk.Poly.create_box(self.body, self.size)
+    space.add(self.body, self.poly)
+  def step(self, steer_angle, dt):
+    self.drive(100.0, 0.0, steer_angle)
+    space.step(dt)
+  def drive(self, acceleration, brake, steer_angle):
+    self.accelerate(acceleration)
+    self.brake(brake)
+    self.front_wheel(steer_angle)
+    self.back_wheel()
+  def accelerate(self, force):
+    self.body.apply_force_at_local_point((force, 0.0), (-self.size[0]/2.0, 0.0))
+  def brake(self, force):
+    velocity = self.body.velocity_at_local_point((0.0, 0.0))
+    heading = Vec2d(1.0, 0.0)
+    heading.rotate(self.body.angle)
+    if abs(velocity.dot(heading)) > 1e-3:
+      sign = velocity.dot(heading) / abs(velocity.dot(heading))
+      self.body.apply_force_at_local_point((-sign*force, 0.0), (0.0, 0.0))
+  def front_wheel(self, steer_angle=0.0):
+    velocity_wheel = self.body.velocity_at_local_point((self.size[0]/2.0, 0.0))
+    steer_vector = Vec2d(1.0, 0.0)
+    steer_vector.rotate(self.body.angle + steer_angle)
+    friction_parallel = -0.1*velocity_wheel.dot(steer_vector)
+    friction_perpendicular = -3.0*velocity_wheel.dot(steer_vector.perpendicular())
+    friction = Vec2d(friction_parallel, friction_perpendicular)
+    self.body.apply_force_at_local_point(friction, (self.size[0]/2.0, 0.0))
+  def back_wheel(self):
+    velocity_wheel = self.body.velocity_at_local_point((-self.size[0]/2.0, 0.0))
+    steer_vector = Vec2d(1.0, 0.0)
+    steer_vector.rotate(self.body.angle)
+    friction_parallel = -0.1*velocity_wheel.dot(steer_vector)
+    friction_perpendicular = -3.0*velocity_wheel.dot(steer_vector.perpendicular())
+    friction = Vec2d(friction_parallel, friction_perpendicular)
+    self.body.apply_force_at_local_point(friction, (-self.size[0]/2.0, 0.0))
+
 class Car:
   def __init__(self, dt):
     self.dt = dt
-    self.car_model = CarModel()
+    self.car_model = CarModelSimple()
     self.steer_angle = 0.0
     self.reward = 0.0
     self.epsilon0 = 0.0
