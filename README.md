@@ -12,5 +12,5 @@ experiments and very much in a state of constant flux.
 * [pymunk](http://www.pymunk.org/)
 * [scikit-learn](http://scikit-learn.org/)
 * [NumPy](http://www.numpy.org/)
-* [Matplotlib](http://matplotlib.org/
+* [Matplotlib](http://matplotlib.org/)
 * [h5py](http://www.h5py.org/)
