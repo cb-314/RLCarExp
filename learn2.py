@@ -78,7 +78,7 @@ if __name__ == "__main__":
     car.step()
     position_log.append(np.array(car.car_model.position))
 
-    if t % 1000 == 0 and t >= 500:
+    if t % 100 == 0 and t >= 500:
       plt.clf()
       plt.suptitle(str(t)+" "+str(np.sum(car.rewards)))
       plt.subplot(221)
