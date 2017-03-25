@@ -42,14 +42,14 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-1 or len(self.log) < 500:
+    if len(self.log) % 100 == 0:
+      # retrain model
+      self.q_model = KNeighborsRegressor(n_neighbors=10, weights="distance")
+      self.q_model.fit(self.log, self.rewards)
+    if epsilon < 1e-2 + 5e-1 * math.exp(1e-3*len(self.log)) or len(self.log) < 500:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
-      if len(self.log) % 100 == 0:
-        # retrain model
-        self.q_model = KNeighborsRegressor(n_neighbors=10, weights="distance")
-        self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       search = []
       for steer_angle in steer_angle_space:
