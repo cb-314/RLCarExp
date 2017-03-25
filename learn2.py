@@ -5,6 +5,7 @@ from sklearn.svm import SVR
 import matplotlib.pyplot as plt
 import math
 import cPickle
+import h5py
 
 class CarModel:
   def __init__(self):
@@ -31,8 +32,9 @@ class Car:
     self.log.append(row)
     self.rewards.append(self.reward)
     if len(self.log) % 100000 == 0:
-      with open("log2.pick", "wb") as out_file:
-        cPickle.dump({"log": self.log, "rewards": self.rewards}, out_file)
+      with h5py.File("log2.hdf5", "w") as f:
+        f.create_dataset("log", data=np.array(self.log))
+        f.create_dataset("rewards", data=np.array(self.rewards))
   def step(self):
     steer_angle_space = np.linspace(-0.2, 0.2, 21)
     # epsilon-greedy

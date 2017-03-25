@@ -8,25 +8,24 @@ import matplotlib.pyplot as plt
 import math
 import cPickle
 import sys
+import h5py
 
 if __name__ == "__main__":
   file_name = "log.pick"
-  if ".pick" in sys.argv[1]:
-    file_name = sys.argv[1]
-  data = {}
-  with open(file_name, "rb") as in_file:
-    data = cPickle.load(in_file)
-  log = np.array(data["log"])
-  rewards = np.array(data["rewards"])
+  log = []
+  rewards = []
+  with h5py.File("log2.hdf5", "r") as f:
+    log = f[u"log"][:]
+    rewards = f[u"rewards"][:]
  
   scaler = StandardScaler()
   scaler.fit(log)
 
-  knn = RadiusNeighborsRegressor(radius=5e-2, weights="distance")
+  knn = RadiusNeighborsRegressor(radius=5e-2)
   knn.fit(scaler.transform(log), rewards)
 
-  va = np.linspace(-np.pi, np.pi, 51)
-  sa = np.linspace(-0.2, 0.2, 51)
+  va = np.linspace(-np.pi, np.pi, 101)
+  sa = np.linspace(-0.2, 0.2, 101)
   q = np.empty((len(va), len(sa)))
   for i, v in enumerate(va):
     for j, s in enumerate(sa):
@@ -34,8 +33,16 @@ if __name__ == "__main__":
 
   grad_q = np.gradient(q)
 
-  plt.title("angle vs. steer_angle vs. reward")
+  plt.suptitle("angle vs. steer_angle vs. reward")
+  plt.subplot(121)
+  plt.title("0")
   plt.pcolormesh(va, sa, grad_q[0], vmin=np.percentile(grad_q[0].flatten(), 5), vmax=np.percentile(grad_q[0].flatten(), 95))
+  plt.xlabel("angle")
+  plt.ylabel("steerangle")
+  plt.colorbar()
+  plt.subplot(122)
+  plt.title("1")
+  plt.pcolormesh(va, sa, grad_q[1], vmin=np.percentile(grad_q[1].flatten(), 5), vmax=np.percentile(grad_q[1].flatten(), 95))
   plt.xlabel("angle")
   plt.ylabel("steerangle")
   plt.colorbar()
