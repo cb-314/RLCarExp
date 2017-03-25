@@ -1,7 +1,9 @@
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import SGDRegressor
 from sklearn.svm import SVR
+from sklearn.preprocessing import PolynomialFeatures
 import matplotlib.pyplot as plt
 import math
 import cPickle
@@ -40,13 +42,13 @@ class Car:
     # epsilon-greedy
     epsilon = np.random.rand(1)[0]
     #epsilon
-    if epsilon < 1e-2 or len(self.log) < 500:
+    if epsilon < 1e-1 or len(self.log) < 500:
       self.steer_angle = np.random.choice(steer_angle_space)
     # greedy
     else:
       if len(self.log) % 100 == 0:
         # retrain model
-        self.q_model = KNeighborsRegressor(n_neighbors=100, weights="distance")
+        self.q_model = KNeighborsRegressor(n_neighbors=10, weights="distance")
         self.q_model.fit(self.log, self.rewards)
       # use model to decide on action
       search = []
@@ -58,11 +60,11 @@ class Car:
       best = search[-1]
       self.steer_angle = best[0]
     # remember position
-    last_position = np.array(self.car_model.position)
+    last_velocity = np.array(self.car_model.velocity)
     # execute action
     self.car_model.step(self.steer_angle, self.dt)
     # calculate reward
-    self.reward = -abs(math.atan2(self.car_model.velocity[1], self.car_model.velocity[0])/np.pi)
+    self.reward = -abs(math.atan2(self.car_model.velocity[1], self.car_model.velocity[0])/np.pi) + abs(math.atan2(last_velocity[1], last_velocity[0])/np.pi)
     # logging
     self.logging()
 
