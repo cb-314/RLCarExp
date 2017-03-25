@@ -133,7 +133,8 @@ class Car:
     # execute action
     self.car_model.step(self.steer_angle, self.dt)
     # calculate reward
-    self.reward = -abs(math.atan2(self.car_model.velocity[1], self.car_model.velocity[0])/np.pi) + abs(math.atan2(last_velocity[1], last_velocity[0])/np.pi)
+    self.reward = -abs(math.atan2(self.car_model.velocity[1], self.car_model.velocity[0])/np.pi)
+    self.reward = self.reward + abs(math.atan2(last_velocity[1], last_velocity[0])/np.pi)
     # logging
     self.logging()
 
