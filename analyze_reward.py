@@ -9,15 +9,17 @@ import math
 import cPickle
 import sys
 import h5py
+import time
 
 if __name__ == "__main__":
-  file_name = "log.pick"
+  t0 = time.time()
   log = []
   rewards = []
   with h5py.File("log2.hdf5", "r") as f:
     log = f[u"log"][:]
     rewards = f[u"rewards"][:]
- 
+  print "file load time", time.time() - t0
+
   scaler = StandardScaler()
   scaler.fit(log)
 
