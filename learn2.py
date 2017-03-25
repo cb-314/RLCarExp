@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     if t % 100 == 0 and t >= 500:
       plt.clf()
-      plt.suptitle(str(t)+" "+"{:.2f}".format(np.sum(car.rewards))+" "+"{:.2f}".format(car.epsilon0))
+      plt.suptitle(str(t)+" "+"{:.3f}".format(np.sum(car.rewards))+" "+"{:.3f}".format(car.epsilon0))
       plt.subplot(221)
       plt.title("trajectory")
       plt.plot([p[0] for p in position_log], [p[1] for p in position_log], "k-")
